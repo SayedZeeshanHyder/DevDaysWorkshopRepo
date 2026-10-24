@@ -4,6 +4,7 @@ import {
   addToCart,
   cartCount,
   discountAmount,
+  orderTotal,
   removeFromCart,
   setQuantity,
   shippingAmount,
@@ -29,6 +30,12 @@ describe("basket behavior", () => {
     expect(addToCart(state, product).items[0].quantity).toBe(3);
   });
 
+  it("does not add quantities beyond available stock", () => {
+    expect(addToCart({ ...state, items: [{ product, quantity: 3 }] }, product).items[0].quantity).toBe(3);
+    expect(addToCart({ ...state, items: [] }, { ...product, stock: 0 }).items).toEqual([]);
+    expect(addToCart(state, { ...product, stock: 0 })).toEqual(state);
+  });
+
   it("preserves unrelated basket lines", () => {
     const other = { ...product, id: "other" };
     expect(removeFromCart({ ...state, items: [...state.items, { product: other, quantity: 1 }] }, "test").items)
@@ -46,6 +53,7 @@ describe("basket behavior", () => {
   it("applies eligible promotions", () => {
     expect(discountAmount(100, "NOT-A-CODE")).toBe(0);
     expect(discountAmount(100, "save10")).toBe(10);
+    expect(discountAmount(100, " SAVE10 ")).toBe(10);
   });
 
   it("applies delivery rules at the threshold", () => {
@@ -62,7 +70,17 @@ describe("basket behavior", () => {
     expect(setQuantity(state, "test", 0).items).toEqual([]);
   });
 
+  it("caps quantities at stock and ignores invalid quantities", () => {
+    expect(setQuantity(state, "test", 10).items[0].quantity).toBe(3);
+    expect(setQuantity(state, "test", -1).items[0].quantity).toBe(2);
+    expect(setQuantity(state, "test", Number.NaN).items[0].quantity).toBe(2);
+  });
+
   it("calculates tax on the amount after promotion", () => {
     expect(taxAmount(100, 10)).toBe(7.2);
+  });
+
+  it("calculates an order total using quantities, discount, shipping, and discounted tax", () => {
+    expect(orderTotal(state.items, "save10")).toBeCloseTo(58.59);
   });
 });

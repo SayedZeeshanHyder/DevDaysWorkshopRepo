@@ -14,6 +14,8 @@ describe("catalog discovery", () => {
   it("finds product names regardless of query casing", () => {
     expect(filterProducts(products, { ...baseFilters, query: "air" }).map((product) => product.id))
       .toContain("airbeats-mini");
+    expect(filterProducts(products, { ...baseFilters, query: "  AIR " }).map((product) => product.id))
+      .toContain("airbeats-mini");
   });
 
   it("includes products at the selected rating boundary", () => {
@@ -27,6 +29,7 @@ describe("catalog discovery", () => {
   });
 
   it("places highly rated products first when sorted by rating", () => {
-    expect(filterProducts(products, { ...baseFilters, sort: "rating" })[0].id).toBe("stride-bottle");
+    expect(filterProducts(products, { ...baseFilters, sort: "rating" }).map((product) => product.id))
+      .toEqual(["stride-bottle", "cloud-throw", "airbeats-mini", "pixel-pad", "orbit-lamp", "core-mat"]);
   });
 });
