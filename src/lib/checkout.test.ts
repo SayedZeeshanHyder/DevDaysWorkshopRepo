@@ -16,4 +16,10 @@ describe("checkout identity requirements", () => {
     expect(isValidEmail("buyer@")).toBe(false);
     expect(isValidEmail("buyer.example.com")).toBe(false);
   });
+
+  it("rejects malformed email domains", () => {
+    expect(isValidEmail("buyer@.com")).toBe(false);
+    expect(isValidEmail("buyer@example..org")).toBe(false);
+    expect(isValidEmail("buyer @example.org")).toBe(false);
+  });
 });

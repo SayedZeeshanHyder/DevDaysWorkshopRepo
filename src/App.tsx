@@ -6,6 +6,7 @@ import { products } from "./data/products";
 import { addToCart, cartCount, removeFromCart, setQuantity } from "./lib/cart";
 import { filterProducts } from "./lib/catalog";
 import { createOrder } from "./lib/checkout";
+import { saveOrder } from "./lib/orderStorage";
 import { toggleWishlist } from "./lib/wishlist";
 import type { CartState, Category, CheckoutDetails, Product, SortOption } from "./types";
 
@@ -29,14 +30,21 @@ export default function App() {
   );
 
   function handleAdd(product: Product) {
-    setCart((current) => addToCart(current, product));
+    const nextCart = addToCart(cart, product);
+    if (nextCart === cart) {
+      setNotice(`No more ${product.title} are available.`);
+      return;
+    }
+
+    setCart(nextCart);
     setNotice(`${product.title} added to your cart.`);
   }
 
   function handleCheckout(details: CheckoutDetails) {
     try {
       const order = createOrder(details, cart.items, cart.coupon);
-      setNotice(`Order ${order.id} confirmed. A receipt will go to ${order.customerEmail}.`);
+      saveOrder(order);
+      setNotice(`Demo order ${order.id} saved on this device. No email was sent.`);
       setCart(initialCart);
       setIsCartOpen(false);
     } catch (error) {

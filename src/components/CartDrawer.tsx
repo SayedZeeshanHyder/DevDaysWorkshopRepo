@@ -54,6 +54,7 @@ export function CartDrawer({
                     type="number"
                     min="0"
                     max={product.stock}
+                    step="1"
                     value={quantity}
                     onChange={(event) => onQuantityChange(product.id, Number(event.target.value))}
                   />

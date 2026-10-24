@@ -2,7 +2,26 @@ import type { CartItem, CheckoutDetails, Order } from "../types";
 import { orderTotal } from "./cart";
 
 export function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const [localPart, domain, ...extraParts] = email.split("@");
+  if (
+    extraParts.length > 0 ||
+    !localPart ||
+    !domain ||
+    localPart.length > 64 ||
+    email.length > 254 ||
+    !/^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart) ||
+    localPart.startsWith(".") ||
+    localPart.endsWith(".") ||
+    localPart.includes("..")
+  ) {
+    return false;
+  }
+
+  const domainLabels = domain.split(".");
+  return domainLabels.length > 1 && domainLabels.every((label) =>
+    label.length <= 63 &&
+    /^[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?$/i.test(label)
+  );
 }
 
 export function isValidPostalCode(postalCode: string): boolean {

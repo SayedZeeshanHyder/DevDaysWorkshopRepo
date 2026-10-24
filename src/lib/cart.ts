@@ -8,26 +8,44 @@ export function addToCart(state: CartState, product: Product): CartState {
   const existing = state.items.find((item) => item.product.id === product.id);
 
   if (existing) {
+    if (existing.quantity >= product.stock) {
+      return state;
+    }
+
     return {
       ...state,
       items: state.items.map((item) =>
         item.product.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
+          ? { ...item, quantity: Math.min(item.quantity + 1, product.stock) }
           : item
       )
     };
+  }
+
+  if (product.stock <= 0) {
+    return state;
   }
 
   return { ...state, items: [...state.items, { product, quantity: 1 }] };
 }
 
 export function setQuantity(state: CartState, productId: string, quantity: number): CartState {
+  if (!Number.isFinite(quantity)) {
+    return state;
+  }
+
+  const item = state.items.find((current) => current.product.id === productId);
+  if (!item) {
+    return state;
+  }
+
+  const adjustedQuantity = Math.min(Math.trunc(quantity), item.product.stock);
   return {
     ...state,
-    items: quantity <= 0
+    items: adjustedQuantity <= 0
       ? state.items.filter((item) => item.product.id !== productId)
       : state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId ? { ...item, quantity: adjustedQuantity } : item
         )
   };
 }
