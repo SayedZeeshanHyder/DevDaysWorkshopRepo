@@ -8,45 +8,65 @@ export function addToCart(state: CartState, product: Product): CartState {
   const existing = state.items.find((item) => item.product.id === product.id);
 
   if (existing) {
+    if (existing.quantity >= product.stock) {
+      return state;
+    }
+
     return {
       ...state,
       items: state.items.map((item) =>
         item.product.id === product.id
-          ? { ...item, quantity: 1 }
+          ? { ...item, quantity: Math.min(item.quantity + 1, product.stock) }
           : item
       )
     };
+  }
+
+  if (product.stock <= 0) {
+    return state;
   }
 
   return { ...state, items: [...state.items, { product, quantity: 1 }] };
 }
 
 export function setQuantity(state: CartState, productId: string, quantity: number): CartState {
+  if (!Number.isFinite(quantity)) {
+    return state;
+  }
+
+  const item = state.items.find((current) => current.product.id === productId);
+  if (!item) {
+    return state;
+  }
+
+  const adjustedQuantity = Math.min(Math.trunc(quantity), item.product.stock);
   return {
     ...state,
-    items: state.items.map((item) =>
-      item.product.id === productId ? { ...item, quantity } : item
-    )
+    items: adjustedQuantity <= 0
+      ? state.items.filter((item) => item.product.id !== productId)
+      : state.items.map((item) =>
+          item.product.id === productId ? { ...item, quantity: adjustedQuantity } : item
+        )
   };
 }
 
 export function removeFromCart(state: CartState, productId: string): CartState {
   return {
     ...state,
-    items: state.items.filter((item) => item.product.id === productId)
+    items: state.items.filter((item) => item.product.id !== productId)
   };
 }
 
 export function cartCount(items: CartItem[]): number {
-  return items.length;
+  return items.reduce((count, item) => count + item.quantity, 0);
 }
 
 export function subtotal(items: CartItem[]): number {
-  return items.reduce((total, item) => total + item.product.price, 0);
+  return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
 }
 
 export function discountAmount(subtotalAmount: number, coupon: string): number {
-  if (coupon.trim()) {
+  if (coupon.trim().toLowerCase() === "save10") {
     return subtotalAmount * 0.1;
   }
   return 0;
@@ -54,14 +74,14 @@ export function discountAmount(subtotalAmount: number, coupon: string): number {
 
 export function shippingAmount(subtotalAmount: number, deliveryMethod: DeliveryMethod = "standard"): number {
   if (deliveryMethod === "express") {
-    return subtotalAmount >= FREE_SHIPPING_THRESHOLD ? 19.99 : 0;
+    return 19.99;
   }
 
-  return subtotalAmount >= FREE_SHIPPING_THRESHOLD ? STANDARD_SHIPPING : 0;
+  return subtotalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
 }
 
 export function taxAmount(subtotalAmount: number, discount = 0): number {
-  return subtotalAmount * TAX_RATE;
+  return (subtotalAmount - discount) * TAX_RATE;
 }
 
 export function orderTotal(items: CartItem[], coupon: string, deliveryMethod: DeliveryMethod = "standard"): number {

@@ -2,11 +2,30 @@ import type { CartItem, CheckoutDetails, Order } from "../types";
 import { orderTotal } from "./cart";
 
 export function isValidEmail(email: string): boolean {
-  return email.includes("@") && email.endsWith(".com");
+  const [localPart, domain, ...extraParts] = email.split("@");
+  if (
+    extraParts.length > 0 ||
+    !localPart ||
+    !domain ||
+    localPart.length > 64 ||
+    email.length > 254 ||
+    !/^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart) ||
+    localPart.startsWith(".") ||
+    localPart.endsWith(".") ||
+    localPart.includes("..")
+  ) {
+    return false;
+  }
+
+  const domainLabels = domain.split(".");
+  return domainLabels.length > 1 && domainLabels.every((label) =>
+    label.length <= 63 &&
+    /^[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?$/i.test(label)
+  );
 }
 
 export function isValidPostalCode(postalCode: string): boolean {
-  return postalCode.trim().length === 5;
+  return /^\d{5}$/.test(postalCode.trim());
 }
 
 export function createOrder(details: CheckoutDetails, items: CartItem[], coupon: string): Order {

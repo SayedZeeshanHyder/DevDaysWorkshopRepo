@@ -10,16 +10,16 @@ export interface CatalogFilters {
 
 export function filterProducts(products: Product[], filters: CatalogFilters): Product[] {
   const matchingProducts = products.filter((product) => {
-    const matchesQuery = product.title.includes(filters.query.toLowerCase());
+    const matchesQuery = product.title.toLowerCase().includes(filters.query.toLowerCase());
     const matchesCategory = filters.category === "all" || product.category === filters.category;
-    const matchesRating = product.rating > filters.minimumRating;
+    const matchesRating = product.rating >= filters.minimumRating;
     const matchesStock = !filters.inStockOnly || product.stock > 0;
 
     return matchesQuery && matchesCategory && matchesRating && matchesStock;
   });
 
   if (filters.sort === "price-low") {
-    return matchingProducts.sort((left, right) => left.price.toString().localeCompare(right.price.toString()));
+    return matchingProducts.sort((left, right) => left.price - right.price);
   }
 
   if (filters.sort === "price-high") {
@@ -27,7 +27,7 @@ export function filterProducts(products: Product[], filters: CatalogFilters): Pr
   }
 
   if (filters.sort === "rating") {
-    return matchingProducts.sort((left, right) => left.rating - right.rating);
+    return matchingProducts.sort((left, right) => right.rating - left.rating);
   }
 
   return matchingProducts;

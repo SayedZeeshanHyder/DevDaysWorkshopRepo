@@ -29,6 +29,18 @@ describe("basket behavior", () => {
     expect(addToCart(state, product).items[0].quantity).toBe(3);
   });
 
+  it("does not add units beyond available stock", () => {
+    const atStock = { ...state, items: [{ product, quantity: product.stock }] };
+    expect(addToCart(atStock, product)).toBe(atStock);
+    expect(setQuantity(state, "test", product.stock + 1).items[0].quantity).toBe(product.stock);
+    expect(setQuantity(state, "test", 1.5).items[0].quantity).toBe(1);
+  });
+
+  it("does not add products with no stock", () => {
+    const outOfStock = { ...product, stock: 0 };
+    expect(addToCart({ ...state, items: [] }, outOfStock).items).toEqual([]);
+  });
+
   it("preserves unrelated basket lines", () => {
     const other = { ...product, id: "other" };
     expect(removeFromCart({ ...state, items: [...state.items, { product: other, quantity: 1 }] }, "test").items)
