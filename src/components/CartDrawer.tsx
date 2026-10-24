@@ -52,8 +52,9 @@ export function CartDrawer({
                   Qty
                   <input
                     type="number"
-                    min="0"
+                    min="1"
                     max={product.stock}
+                    step="1"
                     value={quantity}
                     onChange={(event) => onQuantityChange(product.id, Number(event.target.value))}
                   />
@@ -67,7 +68,7 @@ export function CartDrawer({
             Coupon
             <input
               value={coupon}
-              placeholder="Try a discount code"
+              placeholder="Try SAVE10"
               onChange={(event) => onCouponChange(event.target.value)}
             />
           </label>

@@ -12,6 +12,7 @@ import type { CartState, Category, CheckoutDetails, Product, SortOption } from "
 const initialCart: CartState = { items: [], coupon: "" };
 
 export default function App() {
+  const [catalog, setCatalog] = useState(products);
   const [cart, setCart] = useState(initialCart);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "all">("all");
@@ -24,11 +25,17 @@ export default function App() {
 
   const count = useMemo(() => cartCount(cart.items), [cart.items]);
   const visibleProducts = useMemo(
-    () => filterProducts(products, { query, category, minimumRating, inStockOnly, sort }),
-    [query, category, minimumRating, inStockOnly, sort]
+    () => filterProducts(catalog, { query, category, minimumRating, inStockOnly, sort }),
+    [catalog, query, category, minimumRating, inStockOnly, sort]
   );
 
   function handleAdd(product: Product) {
+    const existing = cart.items.find((item) => item.product.id === product.id);
+    if ((existing?.quantity ?? 0) >= product.stock) {
+      setNotice(`${product.title} has no more stock available.`);
+      return;
+    }
+
     setCart((current) => addToCart(current, product));
     setNotice(`${product.title} added to your cart.`);
   }
@@ -37,6 +44,18 @@ export default function App() {
     try {
       const order = createOrder(details, cart.items, cart.coupon);
       setNotice(`Order ${order.id} confirmed. A receipt will go to ${order.customerEmail}.`);
+      const purchasedQuantities = order.items.reduce((quantities, item) => {
+        quantities.set(item.product.id, (quantities.get(item.product.id) ?? 0) + item.quantity);
+        return quantities;
+      }, new Map<string, number>());
+      setCatalog((current) =>
+        current.map((product) => {
+          const purchasedQuantity = purchasedQuantities.get(product.id);
+          return purchasedQuantity
+            ? { ...product, stock: product.stock - purchasedQuantity }
+            : product;
+        })
+      );
       setCart(initialCart);
       setIsCartOpen(false);
     } catch (error) {

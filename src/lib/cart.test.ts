@@ -29,6 +29,11 @@ describe("basket behavior", () => {
     expect(addToCart(state, product).items[0].quantity).toBe(3);
   });
 
+  it("does not add more units than are in stock", () => {
+    const fullState = { ...state, items: [{ product, quantity: product.stock }] };
+    expect(addToCart(fullState, product)).toBe(fullState);
+  });
+
   it("preserves unrelated basket lines", () => {
     const other = { ...product, id: "other" };
     expect(removeFromCart({ ...state, items: [...state.items, { product: other, quantity: 1 }] }, "test").items)
@@ -60,6 +65,10 @@ describe("basket behavior", () => {
 
   it("removes a line when its quantity becomes zero", () => {
     expect(setQuantity(state, "test", 0).items).toEqual([]);
+  });
+
+  it("caps quantities at available stock", () => {
+    expect(setQuantity(state, "test", 20).items[0].quantity).toBe(product.stock);
   });
 
   it("calculates tax on the amount after promotion", () => {

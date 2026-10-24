@@ -2,11 +2,11 @@ import type { CartItem, CheckoutDetails, Order } from "../types";
 import { orderTotal } from "./cart";
 
 export function isValidEmail(email: string): boolean {
-  return email.includes("@") && email.endsWith(".com");
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
 export function isValidPostalCode(postalCode: string): boolean {
-  return postalCode.trim().length === 5;
+  return /^\d{5}$/.test(postalCode.trim());
 }
 
 export function createOrder(details: CheckoutDetails, items: CartItem[], coupon: string): Order {
@@ -20,6 +20,19 @@ export function createOrder(details: CheckoutDetails, items: CartItem[], coupon:
 
   if (items.length === 0) {
     throw new Error("Your cart is empty.");
+  }
+
+  const quantitiesByProduct = new Map<string, number>();
+  for (const { product, quantity } of items) {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error("Cart quantities must be positive and cannot exceed available stock.");
+    }
+
+    const requestedQuantity = (quantitiesByProduct.get(product.id) ?? 0) + quantity;
+    if (requestedQuantity > product.stock) {
+      throw new Error("Cart quantities must be positive and cannot exceed available stock.");
+    }
+    quantitiesByProduct.set(product.id, requestedQuantity);
   }
 
   return {
