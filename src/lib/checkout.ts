@@ -2,11 +2,11 @@ import type { CartItem, CheckoutDetails, Order } from "../types";
 import { orderTotal } from "./cart";
 
 export function isValidEmail(email: string): boolean {
-  return email.includes("@") && email.endsWith(".com");
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export function isValidPostalCode(postalCode: string): boolean {
-  return postalCode.trim().length === 5;
+  return /^\d{5}$/.test(postalCode.trim());
 }
 
 export function createOrder(details: CheckoutDetails, items: CartItem[], coupon: string): Order {
